@@ -54,11 +54,17 @@ def fetch_prepare(api_data):
 db_access = NobelDB()
 
 def load_api_data(api_data_df):
+    # mandatory delete before load
+    db_access.run_query('''delete from nobel_laureates''')
+    # load records
     for v in api_data_df.values.tolist():
         db_access.insert_table(tuple(v))
 
-def run_avg_query():
-    return db_access.run_select_fetch_all('''with avg_prize_data as (select category_en,
+def get_table_count():
+    return  db_access.run_select_fetch_all('''select count(*) from nobel_laureates''')
+
+def avg_query():
+    return '''with avg_prize_data as (select category_en,
                                 round(avg(prize_amount_adjusted)) as avg_prize
                                 from nobel_laureates 
                                 group by category_en)
@@ -74,7 +80,17 @@ def run_avg_query():
                                 from nobel_laureates nl
                                 left join avg_prize_data pd on 
                                 nl.category_en = pd.category_en
-                                ''')
+                                '''
+
+def run_avg_query():
+    return db_access.run_select_fetch_all(avg_query())
+
+def query_to_csv():
+    conn = db_access.create_conn()
+    avg_data_df = pd.read_sql_query(avg_query(), conn)
+    avg_data_df.to_csv("prize_classfication.csv", header=True, index=False)
+    conn.close()
+
 if __name__ == "__main__":
     # main starts here
     api_data = get_laureates(1990, 2000, 25, '')
@@ -85,5 +101,11 @@ if __name__ == "__main__":
     # load data into db
     load_api_data(load_ready_df)
 
-    # run avg query
-    print(run_avg_query())
+    # get table count
+    print("Printing table count")
+    print(get_table_count())
+
+    # run avg query and save the output to csv
+    print("Saving average prize classification data to csv")
+    query_to_csv()
+   

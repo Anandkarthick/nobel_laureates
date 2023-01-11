@@ -24,6 +24,9 @@ class NobelDB:
         self.check_db = self.__check_create_db()
         self.create_nobel_table = self.__create_table__(self.create_table_query)
     
+    def create_conn(self):
+        return sqlite3.connect(f"data/{self.db}")
+    
     def __check_create_db(self):
         try:
             os.makedirs('data')
@@ -55,7 +58,6 @@ class NobelDB:
             result = f"Insert- InComplete"
         finally:
             conn.close()
-        print(result)
         return result
     
     def __create_table__(self, query):
